@@ -1,10 +1,11 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 
-interface Message {
+export interface Message {
   id: string
   role: 'user' | 'assistant' | 'system'
   content: string
   createdAt: string
+  imageUrl?: string
 }
 
 interface ChatState {
