@@ -26,9 +26,12 @@ const chatSlice = createSlice({
   name: 'chat',
   initialState,
   reducers: {
-    addMessage: (state, action: PayloadAction<Message>) => {
-      state.messages.push(action.payload)
-    },
+   addMessage: (state, action: PayloadAction<Message>) => {
+  state.messages.push({
+    ...action.payload,
+    createdAt: action.payload.createdAt || new Date().toISOString(),
+  })
+},
     setMessages: (state, action: PayloadAction<Message[]>) => {
       state.messages = action.payload
     },
