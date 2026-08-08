@@ -1,0 +1,135 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               String         @id @default(cuid())
+  email            String?        @unique
+  phone            String?        @unique
+  passwordHash     String?
+  firstName        String?
+  lastName         String?
+  isVerified       Boolean        @default(false)
+  preferredChannel String?        // web | telegram | whatsapp
+  role             String         @default("user") // user | admin | support
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  conversations    Conversation[]
+  transactions     Transaction[]
+  channelLinks     ChannelLink[]
+  refreshTokens    RefreshToken[]
+
+  @@index([email])
+  @@index([phone])
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([token])
+}
+
+model Conversation {
+  id          String    @id @default(cuid())
+  userId      String?
+  user        User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  channel     String    // web | telegram | whatsapp
+  externalId  String?   // chat_id from Telegram / WhatsApp
+  status      String    @default("active") // active | closed
+  context     Json?     // current intent, collected fields, step in flow
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  messages    Message[]
+  transactions Transaction[]
+
+  @@index([userId])
+  @@index([channel, externalId])
+  @@index([status])
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           String       // user | assistant | system
+  content        String
+  metadata       Json?        // tool calls, rates shown, attachments, etc.
+  createdAt      DateTime     @default(now())
+
+  @@index([conversationId])
+  @@index([createdAt])
+}
+
+model Transaction {
+  id             String        @id @default(cuid())
+  userId         String?
+  user           User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  conversationId String?
+  conversation   Conversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+
+  type           String        // sell_giftcard | sell_crypto | buy_crypto
+  asset          String        // BTC, USDT, Apple Gift Card, Steam, etc.
+  amount         Decimal?      @db.Decimal(18, 8)
+  rate           Decimal?      @db.Decimal(18, 8)
+  fee            Decimal?      @db.Decimal(18, 8)
+  payoutAmount   Decimal?      @db.Decimal(18, 8)
+  currency       String?       // NGN, USD, etc.
+
+  status         String        @default("initiated")
+  // initiated | awaiting_details | pending_payment | processing | completed | failed | cancelled
+
+  details        Json?         // card codes, wallet address, proof images, bank details, etc.
+  reference      String?       @unique
+  receiptUrl     String?
+  notes          String?
+
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([type])
+  @@index([reference])
+  @@index([createdAt])
+}
+
+model ChannelLink {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  channel    String   // telegram | whatsapp
+  externalId String   // telegram chat_id or whatsapp phone number
+  createdAt  DateTime @default(now())
+
+  @@unique([channel, externalId])
+  @@index([userId])
+}
+
+model Rate {
+  id        String   @id @default(cuid())
+  asset     String
+  type      String   // crypto | giftcard
+  buyRate   Decimal? @db.Decimal(18, 8)
+  sellRate  Decimal? @db.Decimal(18, 8)
+  currency  String   @default("NGN")
+  source    String?
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
+  @@unique([asset, type, currency])
+  @@index([asset])
+  @@index([type])
+}
