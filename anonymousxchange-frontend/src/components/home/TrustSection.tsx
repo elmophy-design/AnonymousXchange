@@ -48,7 +48,7 @@ export default function TrustSection() {
             Why traders choose AnonymousXchange
           </h2>
           <p className="mt-3 text-slate-400">
-            Built for speed, clarity, and trust — whether you sell gift cards or move crypto.
+            Built for speed, clarity, and trust — buy or sell gift cards and crypto in one place.
           </p>
         </div>
 

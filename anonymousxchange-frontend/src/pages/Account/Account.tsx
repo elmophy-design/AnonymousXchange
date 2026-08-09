@@ -1,8 +1,9 @@
 import { useEffect, useState, FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { User, Lock, Link2, Save, Loader2 } from 'lucide-react'
+import { User, Lock, Link2, Save, Loader2, Shield } from 'lucide-react'
 import { useAppSelector } from '../../store/hooks'
 import apiClient from '../../api/client'
+import { authApi } from '../../api/auth'
 
 interface Profile {
   id: string
@@ -11,6 +12,8 @@ interface Profile {
   lastName?: string
   isVerified?: boolean
   role?: string
+  preferredChannel?: string
+  twoFactorEnabled?: boolean
   createdAt?: string
 }
 
@@ -31,9 +34,14 @@ export default function Account() {
 
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
+  const [preferredChannel, setPreferredChannel] = useState('web')
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+
+  const [totpSetup, setTotpSetup] = useState<{ secret: string; otpauthUrl: string } | null>(null)
+  const [totpCode, setTotpCode] = useState('')
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false)
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -50,6 +58,8 @@ export default function Account() {
         setProfile(user)
         setFirstName(user.firstName || '')
         setLastName(user.lastName || '')
+        setPreferredChannel(user.preferredChannel || 'web')
+        setTwoFactorEnabled(!!user.twoFactorEnabled)
         setChannels(chRes.data?.data ?? [])
       } catch {
         setMsg({ type: 'err', text: 'Failed to load profile' })
@@ -65,15 +75,19 @@ export default function Account() {
     setSaving(true)
     setMsg(null)
     try {
-      const { data } = await apiClient.patch('/users/me', { firstName, lastName })
+      const { data } = await apiClient.patch('/users/me', {
+        firstName,
+        lastName,
+        preferredChannel,
+      })
       setProfile(data?.data ?? data)
       setMsg({ type: 'ok', text: 'Profile updated' })
     } catch (err: unknown) {
       setMsg({
         type: 'err',
         text:
-          (err as { response?: { data?: { message?: string } } })?.response?.data
-            ?.message || 'Update failed',
+          (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+          'Update failed',
       })
     } finally {
       setSaving(false)
@@ -86,17 +100,10 @@ export default function Account() {
       setMsg({ type: 'err', text: 'Passwords do not match' })
       return
     }
-    if (newPassword.length < 8) {
-      setMsg({ type: 'err', text: 'Password must be at least 8 characters' })
-      return
-    }
     setSaving(true)
     setMsg(null)
     try {
-      await apiClient.post('/users/me/password', {
-        currentPassword,
-        newPassword,
-      })
+      await apiClient.post('/users/me/password', { currentPassword, newPassword })
       setCurrentPassword('')
       setNewPassword('')
       setConfirmPassword('')
@@ -105,11 +112,61 @@ export default function Account() {
       setMsg({
         type: 'err',
         text:
-          (err as { response?: { data?: { message?: string } } })?.response?.data
-            ?.message || 'Password change failed',
+          (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+          'Password change failed',
       })
     } finally {
       setSaving(false)
+    }
+  }
+
+  const start2FA = async () => {
+    setMsg(null)
+    try {
+      const { data } = await authApi.setup2FA()
+      setTotpSetup(data?.data ?? data)
+    } catch (err: unknown) {
+      setMsg({
+        type: 'err',
+        text:
+          (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+          'Could not start 2FA setup',
+      })
+    }
+  }
+
+  const confirm2FA = async () => {
+    setMsg(null)
+    try {
+      await authApi.enable2FA(totpCode)
+      setTwoFactorEnabled(true)
+      setTotpSetup(null)
+      setTotpCode('')
+      setMsg({ type: 'ok', text: 'Two-factor authentication enabled' })
+    } catch (err: unknown) {
+      setMsg({
+        type: 'err',
+        text:
+          (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+          'Invalid code',
+      })
+    }
+  }
+
+  const turnOff2FA = async () => {
+    setMsg(null)
+    try {
+      await authApi.disable2FA(totpCode)
+      setTwoFactorEnabled(false)
+      setTotpCode('')
+      setMsg({ type: 'ok', text: 'Two-factor authentication disabled' })
+    } catch (err: unknown) {
+      setMsg({
+        type: 'err',
+        text:
+          (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+          'Could not disable 2FA',
+      })
     }
   }
 
@@ -117,9 +174,7 @@ export default function Account() {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
         <p className="text-slate-400">Please log in to manage your account.</p>
-        <Link to="/login" className="mt-4 inline-block text-blue-400 hover:text-blue-300">
-          Log in →
-        </Link>
+        <Link to="/login" className="mt-4 inline-block text-blue-400">Log in →</Link>
       </div>
     )
   }
@@ -134,8 +189,8 @@ export default function Account() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-10 sm:px-6 lg:px-8">
-      <h1 className="text-2xl font-bold text-white">Account</h1>
-      <p className="mt-1 text-slate-400">Manage your profile, security, and linked channels.</p>
+      <h1 className="text-2xl font-bold text-white">Account settings</h1>
+      <p className="mt-1 text-slate-400">Profile, security, 2FA, and linked channels.</p>
 
       {msg && (
         <div
@@ -149,7 +204,6 @@ export default function Account() {
         </div>
       )}
 
-      {/* Profile */}
       <section className="mt-8 rounded-2xl border border-white/10 bg-white/5 p-6">
         <div className="mb-4 flex items-center gap-2">
           <User className="h-5 w-5 text-blue-400" />
@@ -163,83 +217,114 @@ export default function Account() {
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="text-xs text-slate-400">First name</label>
-              <input
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white outline-none focus:border-blue-500/40"
-              />
+              <input value={firstName} onChange={(e) => setFirstName(e.target.value)}
+                className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white outline-none focus:border-blue-500/40" />
             </div>
             <div>
               <label className="text-xs text-slate-400">Last name</label>
-              <input
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white outline-none focus:border-blue-500/40"
-              />
+              <input value={lastName} onChange={(e) => setLastName(e.target.value)}
+                className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white outline-none focus:border-blue-500/40" />
             </div>
           </div>
-          <button
-            type="submit"
-            disabled={saving}
-            className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-500 disabled:opacity-50"
-          >
+          <div>
+            <label className="text-xs text-slate-400">Preferred channel</label>
+            <select
+              value={preferredChannel}
+              onChange={(e) => setPreferredChannel(e.target.value)}
+              className="mt-1 w-full rounded-xl border border-white/10 bg-slate-900 px-3 py-2.5 text-sm text-white outline-none focus:border-blue-500/40"
+            >
+              <option value="web">Website</option>
+              <option value="telegram">Telegram</option>
+              <option value="whatsapp">WhatsApp</option>
+              <option value="discord">Discord</option>
+            </select>
+          </div>
+          <button type="submit" disabled={saving}
+            className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-500 disabled:opacity-50">
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
             Save profile
           </button>
         </form>
       </section>
 
-      {/* Password */}
       <section className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-6">
         <div className="mb-4 flex items-center gap-2">
           <Lock className="h-5 w-5 text-blue-400" />
           <h2 className="font-semibold text-white">Change password</h2>
         </div>
         <form onSubmit={changePassword} className="space-y-4">
-          <div>
-            <label className="text-xs text-slate-400">Current password</label>
-            <input
-              type="password"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              required
-              className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white outline-none focus:border-blue-500/40"
-            />
-          </div>
+          <input type="password" required value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)}
+            placeholder="Current password"
+            className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white outline-none focus:border-blue-500/40" />
           <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label className="text-xs text-slate-400">New password</label>
-              <input
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                required
-                minLength={8}
-                className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white outline-none focus:border-blue-500/40"
-              />
-            </div>
-            <div>
-              <label className="text-xs text-slate-400">Confirm new password</label>
-              <input
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-                className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white outline-none focus:border-blue-500/40"
-              />
-            </div>
+            <input type="password" required minLength={8} value={newPassword} onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="New password"
+              className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white outline-none focus:border-blue-500/40" />
+            <input type="password" required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Confirm new password"
+              className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white outline-none focus:border-blue-500/40" />
           </div>
-          <button
-            type="submit"
-            disabled={saving}
-            className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-500 disabled:opacity-50"
-          >
+          <button type="submit" disabled={saving}
+            className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-500 disabled:opacity-50">
             Update password
           </button>
         </form>
       </section>
 
-      {/* Linked channels */}
+      <section className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-6">
+        <div className="mb-4 flex items-center gap-2">
+          <Shield className="h-5 w-5 text-blue-400" />
+          <h2 className="font-semibold text-white">Two-factor authentication</h2>
+        </div>
+        <p className="text-sm text-slate-400">
+          Status:{' '}
+          <span className={twoFactorEnabled ? 'text-emerald-400' : 'text-slate-300'}>
+            {twoFactorEnabled ? 'Enabled' : 'Disabled'}
+          </span>
+        </p>
+        {!twoFactorEnabled && !totpSetup && (
+          <button type="button" onClick={start2FA}
+            className="mt-4 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-500">
+            Set up authenticator app
+          </button>
+        )}
+        {totpSetup && (
+          <div className="mt-4 space-y-3 text-sm">
+            <p className="text-slate-400">
+              Add this secret in Google Authenticator / Authy, then enter a code:
+            </p>
+            <code className="block break-all rounded-lg bg-black/40 px-3 py-2 text-emerald-300">
+              {totpSetup.secret}
+            </code>
+            <p className="break-all text-xs text-slate-500">{totpSetup.otpauthUrl}</p>
+            <input
+              value={totpCode}
+              onChange={(e) => setTotpCode(e.target.value)}
+              placeholder="6-digit code"
+              className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm tracking-widest text-white outline-none focus:border-blue-500/40"
+            />
+            <button type="button" onClick={confirm2FA}
+              className="rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-emerald-500">
+              Confirm & enable
+            </button>
+          </div>
+        )}
+        {twoFactorEnabled && (
+          <div className="mt-4 space-y-3">
+            <input
+              value={totpCode}
+              onChange={(e) => setTotpCode(e.target.value)}
+              placeholder="Code to disable 2FA"
+              className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm tracking-widest text-white outline-none focus:border-blue-500/40"
+            />
+            <button type="button" onClick={turnOff2FA}
+              className="rounded-xl border border-red-500/40 px-4 py-2.5 text-sm text-red-300 hover:bg-red-500/10">
+              Disable 2FA
+            </button>
+          </div>
+        )}
+      </section>
+
       <section className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-6">
         <div className="mb-4 flex items-center gap-2">
           <Link2 className="h-5 w-5 text-blue-400" />
@@ -247,16 +332,12 @@ export default function Account() {
         </div>
         {channels.length === 0 ? (
           <p className="text-sm text-slate-400">
-            No channels linked yet. Start a chat on Telegram or WhatsApp and link your account
-            from the assistant, or contact support.
+            No channels linked yet. Connect Telegram, WhatsApp, or Discord via the assistant.
           </p>
         ) : (
           <ul className="space-y-2">
             {channels.map((ch) => (
-              <li
-                key={ch.id}
-                className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-4 py-3"
-              >
+              <li key={ch.id} className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-4 py-3">
                 <div>
                   <p className="text-sm font-medium capitalize text-white">{ch.channel}</p>
                   <p className="text-xs text-slate-500">{ch.externalId}</p>

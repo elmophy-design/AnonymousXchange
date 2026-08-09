@@ -7,15 +7,17 @@ import {
   Search,
   MessageCircle,
   Send,
+  ArrowLeftRight,
 } from 'lucide-react'
 import { ChatInterface } from '../../components/chat'
 import TrustSection from '../../components/home/TrustSection'
 
 const quickActions = [
   { label: 'Sell Gift Card', description: 'Apple, Steam, Amazon…', icon: Gift },
+  { label: 'Buy Gift Card', description: 'Top up any major brand', icon: Gift },
   { label: 'Sell Crypto', description: 'BTC, USDT, ETH…', icon: Bitcoin },
-  { label: 'Buy Crypto', description: 'Instant & secure', icon: ShoppingCart },
-  { label: 'Check Rates', description: 'Live market rates', href: '/rates', icon: LineChart },
+  { label: 'Buy Crypto', description: 'Instant NGN payouts', icon: ShoppingCart },
+  { label: 'Check Rates', description: 'Live buy & sell rates', href: '/rates', icon: LineChart },
   { label: 'Track Transaction', description: 'Real-time status', href: '/dashboard', icon: Search },
 ]
 
@@ -38,15 +40,15 @@ export default function Home() {
         <div className="relative mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
           <div className="mx-auto max-w-3xl text-center">
             <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-slate-300 backdrop-blur">
-              <MessageCircle className="h-3.5 w-3.5 text-emerald-400" />
-              AI-First Digital Asset Exchange
+              <ArrowLeftRight className="h-3.5 w-3.5 text-emerald-400" />
+              Buy &amp; Sell · Gift Cards &amp; Crypto
             </div>
             <h1 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
-              Trade through conversation
+              Sell and buy gift cards &amp; crypto
             </h1>
             <p className="mx-auto mt-5 max-w-2xl text-base text-slate-400 sm:text-lg">
-              Sell gift cards and crypto with an intelligent assistant. No complex forms —
-              just tell us what you need.
+              Welcome to AnonymousXchange — trade gift cards and crypto through conversation.
+              Buy or sell in one chat, with live rates and multi-channel support.
             </p>
           </div>
 
@@ -54,7 +56,7 @@ export default function Home() {
             <ChatInterface />
           </div>
 
-          <div className="mx-auto mt-12 grid max-w-4xl grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+          <div className="mx-auto mt-12 grid max-w-4xl grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
             {quickActions.map((action) => {
               const Icon = action.icon
               const content = (
@@ -67,9 +69,7 @@ export default function Home() {
                 </div>
               )
               return action.href ? (
-                <Link key={action.label} to={action.href}>
-                  {content}
-                </Link>
+                <Link key={action.label} to={action.href}>{content}</Link>
               ) : (
                 <div key={action.label}>{content}</div>
               )
@@ -77,14 +77,13 @@ export default function Home() {
           </div>
 
           <div className="mx-auto mt-16 max-w-2xl text-center">
-            <p className="text-sm font-medium text-slate-400">
-              Same experience on every channel
-            </p>
+            <p className="text-sm font-medium text-slate-400">Same experience on every channel</p>
             <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
               {[
                 { label: 'Website AI', icon: MessageCircle },
                 { label: 'Telegram', icon: Send },
                 { label: 'WhatsApp', icon: MessageCircle },
+                { label: 'Discord', icon: MessageCircle },
               ].map((ch) => (
                 <span
                   key={ch.label}
@@ -98,7 +97,6 @@ export default function Home() {
           </div>
         </div>
       </div>
-
       <TrustSection />
     </>
   )

@@ -9,6 +9,9 @@ export interface User {
   preferredChannel?: string
   isVerified?: boolean
   phone?: string
+  twoFactorEnabled?: boolean
+  avatarUrl?: string
+  hasGoogle?: boolean
 }
 
 interface AuthState {

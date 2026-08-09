@@ -1,9 +1,11 @@
 const DEFAULT_SUGGESTIONS = [
   'Sell my Apple Gift Card',
-  'What’s today’s USDT rate?',
+  'Buy a Steam Gift Card',
+  'What’s today’s USDT buy & sell rate?',
   'I want to sell Bitcoin',
-  'Track my last transaction',
   'Buy USDT with Naira',
+  'Sell Discord Nitro gift',
+  'Track my last transaction',
 ]
 
 interface SuggestionsProps {

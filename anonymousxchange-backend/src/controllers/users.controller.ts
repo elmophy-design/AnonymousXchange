@@ -19,6 +19,8 @@ export const usersController = {
           isVerified: true,
           role: true,
           preferredChannel: true,
+          twoFactorEnabled: true,
+          avatarUrl: true,
           createdAt: true,
         },
       })
@@ -52,6 +54,8 @@ export const usersController = {
           isVerified: true,
           role: true,
           preferredChannel: true,
+          twoFactorEnabled: true,
+          avatarUrl: true,
           createdAt: true,
         },
       })

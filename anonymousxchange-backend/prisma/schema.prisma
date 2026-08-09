@@ -12,11 +12,15 @@ model User {
   email            String?        @unique
   phone            String?        @unique
   passwordHash     String?
+  googleId         String?        @unique
+  avatarUrl        String?
   firstName        String?
   lastName         String?
   isVerified       Boolean        @default(false)
-  preferredChannel String?        // web | telegram | whatsapp
+  preferredChannel String?        // web | telegram | whatsapp | discord
   role             String         @default("user") // user | admin | support
+  twoFactorEnabled Boolean        @default(false)
+  twoFactorSecret  String?
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
 
@@ -24,9 +28,24 @@ model User {
   transactions     Transaction[]
   channelLinks     ChannelLink[]
   refreshTokens    RefreshToken[]
+  passwordResets   PasswordResetToken[]
 
   @@index([email])
   @@index([phone])
+  @@index([googleId])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([token])
 }
 
 model RefreshToken {

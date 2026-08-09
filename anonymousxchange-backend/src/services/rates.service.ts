@@ -23,6 +23,12 @@ const GIFTCARD_RATES: Record<string, { buy: number; sell: number }> = {
   Xbox: { buy: 820, sell: 890 },
   Nike: { buy: 750, sell: 830 },
   Walmart: { buy: 780, sell: 850 },
+  'Discord Nitro': { buy: 880, sell: 940 },
+  'Roblox': { buy: 760, sell: 840 },
+  'PlayStation': { buy: 830, sell: 900 },
+  'Nintendo eShop': { buy: 810, sell: 880 },
+  'Vanilla': { buy: 700, sell: 780 },
+  'Sephora': { buy: 720, sell: 800 },
 }
 
 export interface RateItem {
