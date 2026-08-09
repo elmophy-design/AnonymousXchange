@@ -4,6 +4,21 @@ import { authApi } from '../../api/auth'
 import { useAppDispatch } from '../../store/hooks'
 import { setCredentials, setLoading } from '../../store/slices/authSlice'
 
+
+declare global {
+  interface Window {
+    google?: {
+      accounts: {
+        id: {
+          initialize: (cfg: Record<string, unknown>) => void
+          renderButton: (el: HTMLElement, cfg: Record<string, unknown>) => void
+        }
+      }
+    }
+  }
+}
+
+
 export default function Register() {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
@@ -65,7 +80,6 @@ export default function Register() {
     script.src = 'https://accounts.google.com/gsi/client'
     script.async = true
     script.onload = () => {
-      // @ts-expect-error GIS global
       window.google?.accounts.id.initialize({
         client_id: clientId,
         callback: async (res: { credential?: string }) => {
@@ -82,7 +96,6 @@ export default function Register() {
         },
       })
       const el = document.getElementById('google-btn-reg')
-      // @ts-expect-error GIS global
       if (el) window.google?.accounts.id.renderButton(el, { theme: 'outline', size: 'large', width: 320 })
     }
     document.body.appendChild(script)
