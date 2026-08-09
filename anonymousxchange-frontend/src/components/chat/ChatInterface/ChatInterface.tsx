@@ -134,7 +134,17 @@ export default function ChatInterface() {
 
       {/* Messages */}
       <div className="relative z-10 flex min-h-0 flex-1 flex-col">
-        <MessageList messages={messages} isTyping={isTyping} />
+        {messages.length === 0 && !isTyping ? (
+          <div className="flex flex-1 flex-col items-center justify-center gap-3 px-4 py-8 text-center">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-xl font-bold text-white shadow-lg shadow-blue-500/30">
+              AX
+            </div>
+            <p className="font-medium text-slate-200">How can I help you today?</p>
+            <p className="text-sm text-slate-400">Sell gift cards, check rates, or track a transaction</p>
+          </div>
+        ) : (
+          <MessageList messages={messages} isTyping={isTyping} />
+        )}
         {!hasStarted && <Suggestions onSelect={handleSend} />}
         {error && (
           <p className="px-4 pb-2 text-center text-xs text-red-400">{error}</p>

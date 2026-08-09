@@ -1,4 +1,4 @@
-import { CheckCircle2, Circle, Clock, XCircle, Loader2 } from 'lucide-react'
+import { CheckCircle2, Circle, XCircle, Loader2 } from 'lucide-react'
 import { cn } from '../../../utils/cn'
 
 const STATUS_ORDER = [

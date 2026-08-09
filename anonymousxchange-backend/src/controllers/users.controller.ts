@@ -18,6 +18,7 @@ export const usersController = {
           lastName: true,
           isVerified: true,
           role: true,
+          preferredChannel: true,
           createdAt: true,
         },
       })
@@ -34,13 +35,14 @@ export const usersController = {
     try {
       if (!req.user?.id) throw new AppError('Authentication required', 401)
 
-      const { firstName, lastName } = req.body
+      const { firstName, lastName, preferredChannel } = req.body
 
       const user = await prisma.user.update({
         where: { id: req.user.id },
         data: {
           firstName: firstName?.trim() || undefined,
           lastName: lastName?.trim() || undefined,
+          preferredChannel: preferredChannel?.trim() || undefined,
         },
         select: {
           id: true,
@@ -49,6 +51,7 @@ export const usersController = {
           lastName: true,
           isVerified: true,
           role: true,
+          preferredChannel: true,
           createdAt: true,
         },
       })

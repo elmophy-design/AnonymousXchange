@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { TrendingUp, RefreshCw } from 'lucide-react'
-import { ratesApi } from '../../../api/rates'
 import { Link } from 'react-router-dom'
+import { ratesApi } from '../../../api/rates'
 
 interface RateItem {
   asset: string
@@ -16,26 +16,35 @@ export default function LiveRatesStrip() {
   const [loading, setLoading] = useState(true)
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
 
-  const load = async () => {
-    try {
-      const { data } = await ratesApi.getAll()
-      const payload = data?.data ?? data
-      const items: RateItem[] = Array.isArray(payload)
-        ? payload
-        : payload?.items ?? payload?.rates ?? []
-      setRates(items.slice(0, 8))
-      setLastUpdated(new Date())
-    } catch {
-      // keep previous
-    } finally {
-      setLoading(false)
-    }
-  }
-
   useEffect(() => {
+    let cancelled = false
+    const load = async () => {
+      try {
+        const { data } = await ratesApi.getAll()
+        const payload = data?.data ?? data
+        const items: RateItem[] = Array.isArray(payload)
+          ? payload
+          : Array.isArray(payload?.items)
+            ? payload.items
+            : Array.isArray(payload?.rates)
+              ? payload.rates
+              : []
+        if (!cancelled) {
+          setRates(items.slice(0, 8))
+          setLastUpdated(new Date())
+        }
+      } catch {
+        // keep previous rates
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
     load()
-    const id = setInterval(load, 60_000) // refresh every 60s
-    return () => clearInterval(id)
+    const id = setInterval(load, 60_000)
+    return () => {
+      cancelled = true
+      clearInterval(id)
+    }
   }, [])
 
   if (loading && rates.length === 0) {
@@ -60,31 +69,20 @@ export default function LiveRatesStrip() {
         </div>
         <div className="flex items-center gap-4 sm:gap-6">
           {rates.map((r) => (
-            <div
-              key={`${r.asset}-${r.type}`}
-              className="flex shrink-0 items-center gap-2 text-xs"
-            >
+            <div key={`${r.asset}-${r.type}`} className="flex shrink-0 items-center gap-2 text-xs">
               <span className="font-semibold text-white">{r.asset}</span>
               {r.sellRate != null && (
                 <span className="text-slate-400">
-                  Sell{' '}
-                  <span className="text-slate-200">
-                    ₦{Number(r.sellRate).toLocaleString()}
-                  </span>
+                  Sell <span className="text-slate-200">₦{Number(r.sellRate).toLocaleString()}</span>
                 </span>
               )}
               {r.buyRate != null && (
-                <span className="text-slate-500">
-                  Buy ₦{Number(r.buyRate).toLocaleString()}
-                </span>
+                <span className="text-slate-500">Buy ₦{Number(r.buyRate).toLocaleString()}</span>
               )}
             </div>
           ))}
         </div>
-        <Link
-          to="/rates"
-          className="ml-auto shrink-0 text-xs font-medium text-blue-400 hover:text-blue-300"
-        >
+        <Link to="/rates" className="ml-auto shrink-0 text-xs font-medium text-blue-400 hover:text-blue-300">
           All rates →
         </Link>
         {lastUpdated && (
