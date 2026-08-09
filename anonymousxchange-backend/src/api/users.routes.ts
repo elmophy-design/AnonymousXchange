@@ -6,5 +6,7 @@ const router = Router()
 
 router.get('/me', authenticate, usersController.getMe)
 router.patch('/me', authenticate, usersController.updateMe)
+router.post('/me/password', authenticate, usersController.changePassword)
+router.get('/me/channels', authenticate, usersController.getChannels)
 
 export default router

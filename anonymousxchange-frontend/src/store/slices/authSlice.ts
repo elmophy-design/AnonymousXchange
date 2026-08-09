@@ -5,7 +5,6 @@ interface User {
   email?: string
   firstName?: string
   lastName?: string
-  preferredChannel?: string
   role?: string
 }
 

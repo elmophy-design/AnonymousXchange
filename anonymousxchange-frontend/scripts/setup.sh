@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -euo pipefail
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$ROOT"
+if [ ! -f .env ]; then cp .env.example .env; echo "Created .env"; fi
+npm install
+echo "Run: npm run dev → http://localhost:5173"

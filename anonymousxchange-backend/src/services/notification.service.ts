@@ -54,4 +54,29 @@ export const notificationService = {
     logger.info(`[sms:skipped] to=${phone} msg=${message.slice(0, 40)}...`)
     return { skipped: true }
   },
+
+  async sendSupportTicket(payload: {
+    subject: string
+    message: string
+    email: string
+    userId?: string
+    createdAt: string
+  }) {
+    const ops = process.env.SUPPORT_EMAIL || process.env.SMTP_FROM
+    if (!ops) {
+      logger.info('[support:ticket:logged]', payload)
+      return { logged: true }
+    }
+    const html = `
+      <h2>Support ticket</h2>
+      <p><strong>From:</strong> ${payload.email}</p>
+      <p><strong>User ID:</strong> ${payload.userId || '—'}</p>
+      <p><strong>Subject:</strong> ${payload.subject}</p>
+      <p><strong>Message:</strong></p>
+      <pre>${payload.message}</pre>
+      <p><small>${payload.createdAt}</small></p>
+    `
+    return this.sendEmail(ops, `[Support] ${payload.subject}`, html)
+  },
+
 }

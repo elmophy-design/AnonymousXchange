@@ -6,7 +6,6 @@ import path from 'path'
 import { config } from './config'
 import { errorHandler } from './middleware/error.middleware'
 import { apiLimiter } from './middleware/rateLimit.middleware'
-import { requestIdMiddleware } from './middleware/requestId.middleware'
 import apiRoutes from './api'
 
 const app = express()
@@ -25,7 +24,6 @@ app.use(
     credentials: true,
   })
 )
-app.use(requestIdMiddleware)
 app.use(morgan(config.nodeEnv === 'development' ? 'dev' : 'combined'))
 app.use(express.json({ limit: '1mb' }))
 app.use(express.urlencoded({ extended: true, limit: '1mb' }))

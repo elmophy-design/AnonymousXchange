@@ -45,7 +45,6 @@ const chatSlice = createSlice({
       state.messages = []
       state.conversationId = null
       state.isTyping = false
-      state.loading = false
     },
   },
 })

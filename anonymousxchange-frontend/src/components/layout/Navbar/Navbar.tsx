@@ -64,9 +64,12 @@ export default function Navbar() {
         <div className="flex items-center gap-3">
           {isAuthenticated ? (
             <>
-              <span className="hidden text-sm text-slate-400 sm:block">
+              <Link
+                to="/account"
+                className="hidden text-sm text-slate-300 hover:text-white sm:block"
+              >
                 {user?.firstName || user?.email || 'Account'}
-              </span>
+              </Link>
               <button
                 onClick={() => dispatch(logout())}
                 className="flex items-center gap-1.5 rounded-lg border border-white/10 px-3 py-1.5 text-sm text-slate-300 transition hover:bg-white/5"
