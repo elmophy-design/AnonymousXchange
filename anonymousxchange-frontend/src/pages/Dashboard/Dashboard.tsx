@@ -3,6 +3,9 @@ import { Link } from 'react-router-dom'
 import { Activity, CheckCircle2, Wallet, MessageCircle } from 'lucide-react'
 import { transactionsApi } from '../../api/transactions'
 import { useAppSelector } from '../../store/hooks'
+import ProfileCard from './ProfileCard'
+import ChatHistoryPanel from './ChatHistoryPanel'
+import TransactionDetailCard from './TransactionDetailCard'
 
 interface Transaction {
   id: string
@@ -112,9 +115,16 @@ export default function Dashboard() {
         </div>
       )}
 
-      <div className="mt-10">
-        <h2 className="mb-4 text-lg font-semibold text-white">Recent transactions</h2>
-        {loading ? (
+      <div className="mt-10 grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+        <div className="space-y-6">
+          <ProfileCard />
+          <TransactionDetailCard />
+          <ChatHistoryPanel />
+        </div>
+
+        <div>
+          <h2 className="mb-4 text-lg font-semibold text-white">Recent transactions</h2>
+          {loading ? (
           <p className="text-slate-400">Loading…</p>
         ) : items.length === 0 ? (
           <div className="rounded-xl border border-white/10 bg-white/5 p-8 text-center">
@@ -160,6 +170,7 @@ export default function Dashboard() {
             ))}
           </div>
         )}
+        </div>
       </div>
     </div>
   )

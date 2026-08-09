@@ -5,9 +5,11 @@ import transactionsRoutes from './transactions.routes'
 import chatRoutes from './chat.routes'
 import usersRoutes from './users.routes'
 import adminRoutes from './admin.routes'
+import healthRoutes from './health.routes'
 
 const router = Router()
 
+router.use('/health', healthRoutes)
 router.use('/auth', authRoutes)
 router.use('/rates', ratesRoutes)
 router.use('/transactions', transactionsRoutes)

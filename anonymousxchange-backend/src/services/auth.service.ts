@@ -6,6 +6,7 @@ import {
   verifyRefreshToken,
 } from '../utils/jwt'
 import { AppError } from '../middleware/error.middleware'
+import { getLoginAttemptState, recordFailedLogin, resetLoginAttempts } from '../utils/authSecurity'
 
 export interface RegisterInput {
   email: string
@@ -96,15 +97,25 @@ export const authService = {
       throw new AppError('Email and password are required', 400)
     }
 
+    const lockKey = `login:${email}`
+    const lockState = getLoginAttemptState(lockKey)
+    if (lockState.locked) {
+      throw new AppError('Too many failed attempts. Please try again later.', 429)
+    }
+
     const user = await prisma.user.findUnique({ where: { email } })
     if (!user || !user.passwordHash) {
+      recordFailedLogin(lockKey, 5, 15 * 60 * 1000)
       throw new AppError('Invalid email or password', 401)
     }
 
     const valid = await comparePassword(input.password, user.passwordHash)
     if (!valid) {
+      recordFailedLogin(lockKey, 5, 15 * 60 * 1000)
       throw new AppError('Invalid email or password', 401)
     }
+
+    resetLoginAttempts(lockKey)
 
     const accessToken = signAccessToken({ userId: user.id, email: user.email })
     const refreshToken = signRefreshToken({ userId: user.id, email: user.email })

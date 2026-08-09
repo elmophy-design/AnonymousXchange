@@ -1,10 +1,11 @@
 import axios from 'axios'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
+const DEFAULT_TIMEOUT = 15000
 
 export const apiClient = axios.create({
   baseURL: API_URL,
-  timeout: 15000,
+  timeout: DEFAULT_TIMEOUT,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -39,7 +40,7 @@ apiClient.interceptors.response.use(
 
         const { data } = await axios.post(`${API_URL}/auth/refresh`, {
           refreshToken,
-        })
+        }, { timeout: DEFAULT_TIMEOUT })
 
         localStorage.setItem('accessToken', data.data.accessToken)
         if (data.data.refreshToken) {

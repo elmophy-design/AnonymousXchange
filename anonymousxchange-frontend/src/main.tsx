@@ -4,12 +4,14 @@ import { Provider } from 'react-redux'
 import { BrowserRouter } from 'react-router-dom'
 import { store } from './store'
 import App from './App'
+import SessionBootstrap from './components/common/SessionBootstrap'
 import './index.css'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <Provider store={store}>
       <BrowserRouter>
+        <SessionBootstrap />
         <App />
       </BrowserRouter>
     </Provider>
