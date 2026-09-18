@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { ArrowRightLeft, RefreshCw } from 'lucide-react'
 import { ratesApi } from '../../api/rates'
 
 interface Rate {
@@ -8,6 +10,13 @@ interface Rate {
   sellRate: number | null
   currency: string
   updatedAt?: string
+}
+
+function tradeUrl(asset: string, type: string, action: 'buy' | 'sell') {
+  const kind = type === 'giftcard' ? `${asset} gift card` : asset
+  const prompt =
+    action === 'sell' ? `I want to sell ${kind}` : `I want to buy ${kind}`
+  return `/?trade=${encodeURIComponent(prompt)}#trade`
 }
 
 export default function Rates() {
@@ -34,14 +43,14 @@ export default function Rates() {
 
   useEffect(() => {
     load()
-    const id = setInterval(load, 60000) // refresh every 60s
+    const id = setInterval(load, 60000)
     return () => clearInterval(id)
   }, [])
 
   const crypto = rates.filter((r) => r.type === 'crypto')
   const giftcards = rates.filter((r) => r.type === 'giftcard')
   const latestUpdate = rates
-    .map((rate) => rate.updatedAt ? new Date(rate.updatedAt).getTime() : 0)
+    .map((rate) => (rate.updatedAt ? new Date(rate.updatedAt).getTime() : 0))
     .filter(Boolean)
 
   return (
@@ -59,10 +68,12 @@ export default function Rates() {
           )}
         </div>
         <button
+          type="button"
           onClick={load}
           disabled={loading}
-          className="rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-300 transition hover:bg-white/10 disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-300 transition hover:bg-white/10 disabled:opacity-50"
         >
+          <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
           {loading ? 'Refreshing…' : 'Refresh'}
         </button>
       </div>
@@ -82,9 +93,9 @@ export default function Rates() {
               <h2 className="mb-4 text-lg font-semibold text-white">Cryptocurrency</h2>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {crypto.map((r) => (
-                  <div
+                  <article
                     key={`${r.type}-${r.asset}`}
-                    className="rounded-xl border border-white/10 bg-white/5 p-5 backdrop-blur transition hover:border-blue-500/30"
+                    className="group relative flex flex-col rounded-xl border border-white/10 bg-white/5 p-5 backdrop-blur transition hover:border-blue-500/40 hover:bg-blue-500/5 hover:shadow-lg hover:shadow-blue-500/5"
                   >
                     <div className="flex items-center justify-between">
                       <span className="text-lg font-bold text-white">{r.asset}</span>
@@ -106,7 +117,23 @@ export default function Rates() {
                         </p>
                       </div>
                     </div>
-                  </div>
+                    <div className="mt-5 flex gap-2">
+                      <Link
+                        to={tradeUrl(r.asset, r.type, 'buy')}
+                        className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-emerald-600/90 px-3 py-2 text-xs font-semibold text-white transition hover:bg-emerald-500"
+                      >
+                        Buy
+                        <ArrowRightLeft className="h-3.5 w-3.5" />
+                      </Link>
+                      <Link
+                        to={tradeUrl(r.asset, r.type, 'sell')}
+                        className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-amber-600/90 px-3 py-2 text-xs font-semibold text-white transition hover:bg-amber-500"
+                      >
+                        Sell
+                        <ArrowRightLeft className="h-3.5 w-3.5" />
+                      </Link>
+                    </div>
+                  </article>
                 ))}
               </div>
             </section>
@@ -114,15 +141,20 @@ export default function Rates() {
 
           {giftcards.length > 0 && (
             <section>
-              <h2 className="mb-4 text-lg font-semibold text-white">Gift Cards (sell rate per $1)</h2>
+              <h2 className="mb-4 text-lg font-semibold text-white">
+                Gift Cards (sell rate per $1)
+              </h2>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {giftcards.map((r) => (
-                  <div
+                  <Link
                     key={`${r.type}-${r.asset}`}
-                    className="rounded-xl border border-white/10 bg-white/5 p-5 backdrop-blur transition hover:border-indigo-500/30"
+                    to={tradeUrl(r.asset, r.type, 'sell')}
+                    className="group block cursor-pointer rounded-xl border border-white/10 bg-white/5 p-5 backdrop-blur transition hover:border-indigo-500/40 hover:bg-indigo-500/5 hover:shadow-lg hover:shadow-indigo-500/5"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="font-semibold text-white">{r.asset}</span>
+                      <span className="font-semibold text-white group-hover:text-indigo-200">
+                        {r.asset}
+                      </span>
                       <span className="rounded-full bg-indigo-500/15 px-2 py-0.5 text-[11px] text-indigo-300">
                         Gift Card
                       </span>
@@ -130,7 +162,10 @@ export default function Rates() {
                     <p className="mt-3 text-2xl font-bold text-amber-400">
                       ₦{r.sellRate?.toLocaleString() ?? '—'}
                     </p>
-                  </div>
+                    <p className="mt-3 text-xs font-medium text-indigo-300 opacity-80 transition group-hover:opacity-100">
+                      Tap to sell →
+                    </p>
+                  </Link>
                 ))}
               </div>
             </section>
