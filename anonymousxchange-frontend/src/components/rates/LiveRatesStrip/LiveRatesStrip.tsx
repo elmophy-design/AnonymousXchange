@@ -73,7 +73,11 @@ export default function LiveRatesStrip() {
         </div>
         <div className="flex items-center gap-4 sm:gap-6">
           {rates.map((r) => (
-            <div key={`${r.asset}-${r.type}`} className="flex shrink-0 items-center gap-2 text-xs">
+            <Link
+              key={`${r.asset}-${r.type}`}
+              to="/rates"
+              className="flex shrink-0 items-center gap-2 rounded-md px-1.5 py-0.5 text-xs transition hover:bg-white/5"
+            >
               <span className="font-semibold text-white">{r.asset}</span>
               {r.sellRate != null && (
                 <span className="text-slate-400">
@@ -83,7 +87,7 @@ export default function LiveRatesStrip() {
               {r.buyRate != null && (
                 <span className="text-slate-500">Buy ₦{Number(r.buyRate).toLocaleString()}</span>
               )}
-            </div>
+            </Link>
           ))}
         </div>
         <Link to="/rates" className="ml-auto shrink-0 text-xs font-medium text-blue-400 hover:text-blue-300">
