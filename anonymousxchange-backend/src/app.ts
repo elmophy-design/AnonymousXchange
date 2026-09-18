@@ -21,12 +21,12 @@ app.use(
 const allowedOrigins = [
   'http://localhost:5173',
   'https://anonymous-xchange.vercel.app',
-  // add any preview / staging domains if needed
+  'https://www.anonymous-xchange.com',
+  'https://anonymous-xchange.com',   // apex (redirects to www, but include it)
 ];
 
 app.use(cors({
   origin: (origin, callback) => {
-    // allow non-browser tools (curl, Postman, server-to-server) that send no Origin
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
