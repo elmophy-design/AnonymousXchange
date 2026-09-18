@@ -87,19 +87,57 @@ export default function Home() {
             <p className="text-sm font-medium text-slate-400">Same experience on every channel</p>
             <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
               {[
-                { label: 'Website AI', icon: MessageCircle },
-                { label: 'Telegram', icon: Send },
-                { label: 'WhatsApp', icon: MessageCircle },
-                { label: 'Discord', icon: MessageCircle },
-              ].map((ch) => (
-                <span
-                  key={ch.label}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-xs font-medium text-slate-300"
-                >
-                  <ch.icon className="h-3.5 w-3.5" />
-                  {ch.label}
-                </span>
-              ))}
+                {
+                  label: 'Website AI',
+                  icon: MessageCircle,
+                  href: '/#trade',
+                  external: false,
+                },
+                {
+                  label: 'Telegram',
+                  icon: Send,
+                  href: import.meta.env.VITE_TELEGRAM_URL || 'https://t.me/AnonymousXchangebot',
+                  external: true,
+                },
+                {
+                  label: 'WhatsApp',
+                  icon: MessageCircle,
+                  href: import.meta.env.VITE_WHATSAPP_URL || 'https://wa.me/2349168105331',
+                  external: true,
+                },
+                {
+                  label: 'Discord',
+                  icon: MessageCircle,
+                  href: import.meta.env.VITE_DISCORD_URL || '',
+                  external: true,
+                },
+              ]
+                .filter((ch) => ch.href)
+                .map((ch) => {
+                  const Icon = ch.icon
+                  const className =
+                    'inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-xs font-medium text-slate-300 transition hover:border-blue-500/40 hover:bg-blue-500/10 hover:text-blue-200'
+                  if (ch.external) {
+                    return (
+                      <a
+                        key={ch.label}
+                        href={ch.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={className}
+                      >
+                        <Icon className="h-3.5 w-3.5" />
+                        {ch.label}
+                      </a>
+                    )
+                  }
+                  return (
+                    <Link key={ch.label} to={ch.href} className={className}>
+                      <Icon className="h-3.5 w-3.5" />
+                      {ch.label}
+                    </Link>
+                  )
+                })}
             </div>
           </div>
         </div>
