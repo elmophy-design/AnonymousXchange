@@ -11,7 +11,11 @@ import ChatInput from '../ChatInput/ChatInput'
 import Suggestions from '../ChatInput/Suggestions'
 import type { ChatMessage } from '../Message/Message'
 
-export default function ChatInterface() {
+interface ChatInterfaceProps {
+  initialPrompt?: string
+}
+
+export default function ChatInterface({ initialPrompt }: ChatInterfaceProps) {
   const dispatch = useAppDispatch()
   const { messages, isTyping, conversationId } = useAppSelector((s) => s.chat)
   const [hasStarted, setHasStarted] = useState(messages.length > 0)
@@ -96,7 +100,7 @@ export default function ChatInterface() {
   }
 
   return (
-    <div className="relative flex h-[min(70vh,640px)] w-full flex-col overflow-hidden rounded-2xl border border-white/10 shadow-2xl shadow-black/40">
+    <div id="trade" className="relative flex h-[min(70vh,640px)] w-full flex-col overflow-hidden rounded-2xl border border-white/10 shadow-2xl shadow-black/40">
       {/* Background */}
       <div className="pointer-events-none absolute inset-0">
         <img
@@ -153,7 +157,7 @@ export default function ChatInterface() {
 
       {/* Input */}
       <div className="relative z-10">
-        <ChatInput onSend={handleSend} disabled={isTyping} />
+        <ChatInput onSend={handleSend} disabled={isTyping} initialValue={initialPrompt} />
       </div>
     </div>
   )

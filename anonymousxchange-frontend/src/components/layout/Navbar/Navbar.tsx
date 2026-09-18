@@ -2,6 +2,7 @@ import { Link, NavLink } from 'react-router-dom'
 import { Home, LineChart, LayoutDashboard, LifeBuoy, LogIn, LogOut, Shield } from 'lucide-react'
 import { useAppSelector, useAppDispatch } from '../../../store/hooks'
 import { logout } from '../../../store/slices/authSlice'
+import { authApi } from '../../../api/auth'
 
 const links = [
   { to: '/', label: 'Home', icon: Home },
@@ -14,6 +15,15 @@ export default function Navbar() {
   const { isAuthenticated, user } = useAppSelector((s) => s.auth)
   const dispatch = useAppDispatch()
   const isAdmin = (user as { role?: string })?.role === 'admin'
+
+  const handleLogout = async () => {
+    const refreshToken = localStorage.getItem('refreshToken')
+    try {
+      if (refreshToken) await authApi.logout(refreshToken)
+    } finally {
+      dispatch(logout())
+    }
+  }
 
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 bg-slate-950/80 backdrop-blur-xl">
@@ -71,7 +81,7 @@ export default function Navbar() {
                 {user?.firstName || user?.email || 'Account'}
               </Link>
               <button
-                onClick={() => dispatch(logout())}
+                onClick={() => void handleLogout()}
                 className="flex items-center gap-1.5 rounded-lg border border-white/10 px-3 py-1.5 text-sm text-slate-300 transition hover:bg-white/5"
               >
                 <LogOut className="h-4 w-4" />

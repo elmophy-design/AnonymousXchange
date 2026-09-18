@@ -1,9 +1,9 @@
 import axios from 'axios'
 import { prisma } from '../config/database'
 import { logger } from '../utils/logger'
+import { config } from '../config'
 
 const COINGECKO_BASE = 'https://api.coingecko.com/api/v3'
-const USD_TO_NGN = 1585
 
 const CRYPTO_IDS: Record<string, string> = {
   BTC: 'bitcoin',
@@ -31,6 +31,8 @@ const GIFTCARD_RATES: Record<string, { buy: number; sell: number }> = {
   'Sephora': { buy: 720, sell: 800 },
 }
 
+let cryptoRefreshInFlight: Promise<RateItem[]> | null = null
+
 export interface RateItem {
   asset: string
   type: string
@@ -50,6 +52,9 @@ export const ratesService = {
           ids,
           vs_currencies: 'usd',
         },
+        headers: config.rates.coinGeckoApiKey
+          ? { 'x-cg-demo-api-key': config.rates.coinGeckoApiKey }
+          : undefined,
         timeout: 10000,
       })
 
@@ -59,7 +64,7 @@ export const ratesService = {
         const usd = data[geckoId]?.usd
         if (!usd) continue
 
-        const midNgn = usd * USD_TO_NGN
+        const midNgn = usd * config.rates.usdToNgn
         const buyRate = Math.round(midNgn * 1.015)
         const sellRate = Math.round(midNgn * 0.985)
 
@@ -129,6 +134,34 @@ export const ratesService = {
     }
   },
 
+  async ensureCryptoRates(): Promise<void> {
+    const latest = await prisma.rate.findFirst({
+      where: { type: 'crypto' },
+      orderBy: { updatedAt: 'desc' },
+      select: { updatedAt: true },
+    })
+    const isFresh = latest && Date.now() - latest.updatedAt.getTime() < config.rates.cacheTtlMs
+    if (!isFresh) await this.refreshCrypto()
+  },
+
+  async refreshCrypto(): Promise<void> {
+    if (!cryptoRefreshInFlight) {
+      cryptoRefreshInFlight = this.fetchCryptoRates().finally(() => {
+        cryptoRefreshInFlight = null
+      })
+    }
+    await cryptoRefreshInFlight
+  },
+
+  async ensureGiftCardRates(): Promise<void> {
+    const count = await prisma.rate.count({ where: { type: 'giftcard' } })
+    if (count < Object.keys(GIFTCARD_RATES).length) await this.seedGiftCardRates()
+  },
+
+  async refreshAll(): Promise<void> {
+    await Promise.all([this.refreshCrypto(), this.seedGiftCardRates()])
+  },
+
   async getFromDb(type?: string): Promise<RateItem[]> {
     const where = type ? { type } : {}
     const rows = await prisma.rate.findMany({
@@ -148,17 +181,18 @@ export const ratesService = {
   },
 
   async getAll(): Promise<RateItem[]> {
-    try {
-      await this.fetchCryptoRates()
-    } catch {
-      // ignore network errors – fall back to DB
-    }
-    await this.seedGiftCardRates()
+    await Promise.all([this.ensureCryptoRates(), this.ensureGiftCardRates()])
     return this.getFromDb()
   },
 
   async getOne(asset: string): Promise<RateItem | null> {
     const upper = asset.toUpperCase()
+
+    if (CRYPTO_IDS[upper]) {
+      await this.ensureCryptoRates()
+    } else {
+      await this.ensureGiftCardRates()
+    }
 
     const existing = await prisma.rate.findFirst({
       where: {
@@ -178,31 +212,6 @@ export const ratesService = {
         currency: existing.currency,
         source: existing.source,
         updatedAt: existing.updatedAt,
-      }
-    }
-
-    // Refresh crypto once, then read from DB (no recursive call)
-    if (CRYPTO_IDS[upper]) {
-      try {
-        await this.fetchCryptoRates()
-      } catch {
-        // ignore
-      }
-
-      const refreshed = await prisma.rate.findFirst({
-        where: { asset: upper, type: 'crypto' },
-      })
-
-      if (refreshed) {
-        return {
-          asset: refreshed.asset,
-          type: refreshed.type,
-          buyRate: refreshed.buyRate ? Number(refreshed.buyRate) : null,
-          sellRate: refreshed.sellRate ? Number(refreshed.sellRate) : null,
-          currency: refreshed.currency,
-          source: refreshed.source,
-          updatedAt: refreshed.updatedAt,
-        }
       }
     }
 

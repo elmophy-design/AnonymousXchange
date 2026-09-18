@@ -46,10 +46,10 @@ export default function ResetPassword() {
     <div className="flex min-h-screen items-center justify-center bg-slate-950 px-4">
       <form onSubmit={submit} className="w-full max-w-md space-y-4 rounded-2xl border border-white/10 bg-white/5 p-6">
         <h1 className="text-xl font-bold text-white">Set new password</h1>
-        <input type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)}
+        <input type="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)}
           placeholder="New password"
           className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white outline-none focus:border-blue-500/40" />
-        <input type="password" required minLength={6} value={confirm} onChange={(e) => setConfirm(e.target.value)}
+        <input type="password" required minLength={8} value={confirm} onChange={(e) => setConfirm(e.target.value)}
           placeholder="Confirm password"
           className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white outline-none focus:border-blue-500/40" />
         {error && <p className="text-sm text-red-400">{error}</p>}

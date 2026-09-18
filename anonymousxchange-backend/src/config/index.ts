@@ -30,4 +30,15 @@ export const config = {
     apiKey: process.env.OPENAI_API_KEY || '',
     model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
   },
+
+  rates: {
+    usdToNgn: parseFloat(process.env.USD_TO_NGN || '1585'),
+    refreshIntervalMs: parseInt(process.env.RATES_REFRESH_INTERVAL_MS || '300000', 10),
+    cacheTtlMs: parseInt(process.env.RATES_CACHE_TTL_MS || '60000', 10),
+    coinGeckoApiKey: process.env.COINGECKO_API_KEY || '',
+  },
+
+  telegram: {
+    webhookUrl: process.env.TELEGRAM_WEBHOOK_URL || '',
+  },
 } as const;

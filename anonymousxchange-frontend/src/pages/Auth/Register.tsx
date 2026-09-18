@@ -137,7 +137,7 @@ export default function Register() {
           </div>
           <div>
             <label className="text-xs text-slate-400">Password</label>
-            <input type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)}
+            <input type="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)}
               className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white outline-none focus:border-blue-500/40" />
           </div>
           <button type="submit" disabled={submitting}

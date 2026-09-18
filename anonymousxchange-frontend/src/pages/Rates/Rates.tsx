@@ -40,6 +40,9 @@ export default function Rates() {
 
   const crypto = rates.filter((r) => r.type === 'crypto')
   const giftcards = rates.filter((r) => r.type === 'giftcard')
+  const latestUpdate = rates
+    .map((rate) => rate.updatedAt ? new Date(rate.updatedAt).getTime() : 0)
+    .filter(Boolean)
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
@@ -49,6 +52,11 @@ export default function Rates() {
           <p className="mt-1 text-slate-400">
             Crypto from CoinGecko · Gift cards updated regularly
           </p>
+          {latestUpdate.length > 0 && (
+            <p className="mt-1 text-xs text-slate-500">
+              Last market update: {new Date(Math.max(...latestUpdate)).toLocaleString()}
+            </p>
+          )}
         </div>
         <button
           onClick={load}

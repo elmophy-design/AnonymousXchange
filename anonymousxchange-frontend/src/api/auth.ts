@@ -25,6 +25,6 @@ export const authApi = {
   setup2FA: () => apiClient.post('/auth/2fa/setup'),
   enable2FA: (totpCode: string) => apiClient.post('/auth/2fa/enable', { totpCode }),
   disable2FA: (totpCode: string) => apiClient.post('/auth/2fa/disable', { totpCode }),
-  logout: () => apiClient.post('/auth/logout'),
+  logout: (refreshToken?: string) => apiClient.post('/auth/logout', { refreshToken }),
   refresh: (refreshToken: string) => apiClient.post('/auth/refresh', { refreshToken }),
 }

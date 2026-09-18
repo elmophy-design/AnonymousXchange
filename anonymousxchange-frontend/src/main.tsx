@@ -5,11 +5,13 @@ import { BrowserRouter } from 'react-router-dom'
 import { store } from './store'
 import App from './App'
 import './index.css'
+import SessionBootstrap from './components/common/SessionBootstrap'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <Provider store={store}>
       <BrowserRouter>
+        <SessionBootstrap />
         <App />
       </BrowserRouter>
     </Provider>

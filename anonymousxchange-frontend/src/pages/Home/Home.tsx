@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import {
   Gift,
   Bitcoin,
@@ -21,7 +21,17 @@ const quickActions = [
   { label: 'Track Transaction', description: 'Real-time status', href: '/dashboard', icon: Search },
 ]
 
+const tradePrompts: Record<string, string> = {
+  'Sell Gift Card': 'I want to sell a gift card',
+  'Buy Gift Card': 'I want to buy a gift card',
+  'Sell Crypto': 'I want to sell crypto',
+  'Buy Crypto': 'I want to buy crypto with Naira',
+}
+
 export default function Home() {
+  const [searchParams] = useSearchParams()
+  const tradePrompt = searchParams.get('trade') || undefined
+
   return (
     <>
       <div className="relative min-h-screen overflow-hidden bg-slate-950 text-white">
@@ -53,7 +63,7 @@ export default function Home() {
           </div>
 
           <div className="mx-auto mt-10 max-w-3xl">
-            <ChatInterface />
+            <ChatInterface initialPrompt={tradePrompt} />
           </div>
 
           <div className="mx-auto mt-12 grid max-w-4xl grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
@@ -68,11 +78,8 @@ export default function Home() {
                   <p className="mt-1 text-xs text-slate-400">{action.description}</p>
                 </div>
               )
-              return action.href ? (
-                <Link key={action.label} to={action.href}>{content}</Link>
-              ) : (
-                <div key={action.label}>{content}</div>
-              )
+              const destination = action.href || `/?trade=${encodeURIComponent(tradePrompts[action.label])}#trade`
+              return <Link key={action.label} to={destination}>{content}</Link>
             })}
           </div>
 

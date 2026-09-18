@@ -1,4 +1,4 @@
-import { useState, FormEvent, KeyboardEvent, useRef } from 'react'
+import { useEffect, useState, FormEvent, KeyboardEvent, useRef } from 'react'
 import { Send, ImagePlus, Loader2 } from 'lucide-react'
 import { cn } from '../../../utils/cn'
 import apiClient from '../../../api/client'
@@ -8,6 +8,7 @@ interface ChatInputProps {
   disabled?: boolean
   placeholder?: string
   compact?: boolean
+  initialValue?: string
 }
 
 export default function ChatInput({
@@ -15,10 +16,15 @@ export default function ChatInput({
   disabled = false,
   placeholder = 'Ask anything… e.g. “Sell my Apple Gift Card”',
   compact = false,
+  initialValue = '',
 }: ChatInputProps) {
   const [value, setValue] = useState('')
   const [uploading, setUploading] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (initialValue) setValue(initialValue)
+  }, [initialValue])
 
   const submit = () => {
     const text = value.trim()

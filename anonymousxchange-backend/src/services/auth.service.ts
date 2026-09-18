@@ -71,7 +71,7 @@ export const authService = {
   async register(input: RegisterInput) {
     const email = input.email.toLowerCase().trim()
     if (!email || !input.password) throw new AppError('Email and password are required', 400)
-    if (input.password.length < 6) throw new AppError('Password must be at least 6 characters', 400)
+    if (input.password.length < 8) throw new AppError('Password must be at least 8 characters', 400)
 
     const existing = await prisma.user.findUnique({ where: { email } })
     if (existing) throw new AppError('Email already registered', 409)
@@ -102,7 +102,11 @@ export const authService = {
 
     if (user.twoFactorEnabled && user.twoFactorSecret) {
       if (!input.totpCode) {
-        return { requires2FA: true as const, message: 'Enter your authenticator code' }
+        return {
+          requires2FA: true as const,
+          tempUserId: user.id,
+          message: 'Enter your authenticator code',
+        }
       }
       if (!verifyTotp(user.twoFactorSecret, input.totpCode)) {
         throw new AppError('Invalid authenticator code', 401)
@@ -137,7 +141,10 @@ export const authService = {
     }
 
     const clientId = process.env.GOOGLE_CLIENT_ID
-    if (clientId && payload.aud && payload.aud !== clientId) {
+    if (!clientId) {
+      throw new AppError('Google sign-in is not configured', 503)
+    }
+    if (payload.aud !== clientId) {
       throw new AppError('Google token audience mismatch', 401)
     }
 
@@ -233,7 +240,7 @@ export const authService = {
 
   async resetPassword(token: string, newPassword: string) {
     if (!token || !newPassword) throw new AppError('Token and new password required', 400)
-    if (newPassword.length < 6) throw new AppError('Password must be at least 6 characters', 400)
+    if (newPassword.length < 8) throw new AppError('Password must be at least 8 characters', 400)
 
     const row = await prisma.passwordResetToken.findUnique({ where: { token } })
     if (!row || row.usedAt || row.expiresAt < new Date()) {

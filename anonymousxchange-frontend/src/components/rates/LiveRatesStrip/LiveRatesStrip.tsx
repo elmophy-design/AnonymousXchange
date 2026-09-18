@@ -9,6 +9,7 @@ interface RateItem {
   buyRate?: number | null
   sellRate?: number | null
   currency?: string
+  updatedAt?: string
 }
 
 export default function LiveRatesStrip() {
@@ -31,7 +32,10 @@ export default function LiveRatesStrip() {
               : []
         if (!cancelled) {
           setRates(items.slice(0, 8))
-          setLastUpdated(new Date())
+          const timestamps = items
+            .map((item) => item.updatedAt ? new Date(item.updatedAt).getTime() : 0)
+            .filter(Boolean)
+          setLastUpdated(timestamps.length ? new Date(Math.max(...timestamps)) : null)
         }
       } catch {
         // keep previous rates
