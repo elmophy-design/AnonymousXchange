@@ -18,12 +18,25 @@ app.use(
     contentSecurityPolicy: config.nodeEnv === 'production' ? undefined : false,
   })
 )
-app.use(
-  cors({
-    origin: config.frontendUrl,
-    credentials: true,
-  })
-)
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://anonymous-xchange.vercel.app',
+  // add any preview / staging domains if needed
+];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // allow non-browser tools (curl, Postman, server-to-server) that send no Origin
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error(`Origin ${origin} not allowed by CORS`));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
 app.use(morgan(config.nodeEnv === 'development' ? 'dev' : 'combined'))
 app.use(express.json({ limit: '1mb' }))
 app.use(express.urlencoded({ extended: true, limit: '1mb' }))
